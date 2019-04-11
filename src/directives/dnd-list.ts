@@ -1,4 +1,4 @@
-import { Directive, Input, OnDestroy, OnInit, Output, ElementRef, HostListener, EventEmitter } from '@angular/core';
+import { Directive, Input, OnDestroy, OnInit, Output, ElementRef, HostListener, EventEmitter, ngZone } from '@angular/core';
 import {
     DndState,
     DndListSettings,
@@ -37,21 +37,26 @@ export class DndList implements OnInit, OnDestroy {
     constructor(
         private element: ElementRef,
         private dndState: DndState,
+        private ngZone: ngZone
     ) {
         this.dragState = dndState.dragState;
         this.nativeElement = element.nativeElement;
         this.placeholder = this.getPlaceholderElement();
     }
 
-    public ngOnInit(): void {
-        // placeholder
+    ngOnInit() {
+        this.ngZone.runOutsideAngular(() => {
+            this.element.nativeElement.addEventListener('dragenter', (e) => { this.handleDragEnter(e); });
+            this.element.nativeElement.addEventListener('dragover', (e) => { this.handleDragOver(e); });
+            this.element.nativeElement.addEventListener('dragleave', (e) => { this.handleDragLeave(e); });
+        });
     }
 
     public ngOnDestroy(): void {
         // placeholder
     }
 
-    @HostListener('dragenter', ['$event'])
+    
     public handleDragEnter(event: DragEvent): boolean {
         event = event['originalEvent'] || event;
         const mimeType: string = this.getMimeType(event.dataTransfer.types);
@@ -63,7 +68,7 @@ export class DndList implements OnInit, OnDestroy {
         return false;
     }
 
-    @HostListener('dragover', ['$event'])
+    
     public handleDragOver(event: DragEvent): boolean {
         event = event['originalEvent'] || event;
         const mimeType: string = this.getMimeType(event.dataTransfer.types);
@@ -161,7 +166,7 @@ export class DndList implements OnInit, OnDestroy {
         // create an offset to account for extra elements (including the placeholder element)
         let offset: number = this.nativeElement.children.length - 1 - this.dndModel.length;
         if (this.dndDrop) {
-            this.invokeCallback(this.dndDrop, event, dropEffect, itemType, index, data);
+            data = this.invokeCallback(this.dndDrop, event, dropEffect, itemType, index, data);
             if (!data) return this.stopDragOver();
         }
 
@@ -191,7 +196,6 @@ export class DndList implements OnInit, OnDestroy {
         return false;
     }
 
-    @HostListener('dragleave', ['$event'])
     public handleDragLeave(event: DragEvent): void {
         event = event['originalEvent'] || event;
 
@@ -321,12 +325,13 @@ export class DndList implements OnInit, OnDestroy {
      */
     private getPlaceholderIndex(): number {
         // Remove the dragging element to get the correct index of the placeholder;
+        let index = Array.prototype.indexOf.call(this.nativeElement.children, this.placeholder);
         for (let i: number = 0; i < this.nativeElement.children.length; i++) {
             if (this.nativeElement.children[i].classList.contains('dndDragging')) {
                 this.nativeElement.children[i].remove();
                 break;
             }
         }
-        return Array.prototype.indexOf.call(this.nativeElement.children, this.placeholder);
+        return index;
     }
 }
