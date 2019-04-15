@@ -1,4 +1,4 @@
-import { Directive, Input, OnDestroy, OnInit, Output, ElementRef, HostListener, EventEmitter, ngZone } from '@angular/core';
+import { Directive, Input, OnDestroy, OnInit, Output, ElementRef, HostListener, EventEmitter, NgZone } from '@angular/core';
 import {
     DndState,
     DndListSettings,
@@ -37,7 +37,7 @@ export class DndList implements OnInit, OnDestroy {
     constructor(
         private element: ElementRef,
         private dndState: DndState,
-        private ngZone: ngZone
+        private ngZone: NgZone
     ) {
         this.dragState = dndState.dragState;
         this.nativeElement = element.nativeElement;
